@@ -82,6 +82,7 @@ const App: () => Node = () => {
           </Section>
           <Section title="Learn More">
             Read the docs to discover what to do next:
+            Verificando si las Integracion y despliegue continuo funcionan correctamente
           </Section>
           <LearnMoreLinks />
         </View>
