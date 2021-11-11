@@ -1,0 +1,56 @@
+# Node.js with React
+# Build a Node.js project that uses React.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - src/
+
+stages:
+    - stage: Build
+      jobs:
+      - job: WebsiteBuild
+        displayName: Build Fabrikam Drone Status app
+        pool:
+          vmImage: Ubuntu-lastest
+        continueOnError: false
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    cd scr/
+    npm install
+    npm run build
+  displayName: 'npm install and build'
+
+- script: |
+        cd src/ClientApp/public
+        sudo apt-get install brotli --install-suggests --no-install-recommends -q --assume-yes
+        for f in $(find . -type f \( -iname '*.html' -o -iname '*.map' -o -iname '*.js' -o -iname '*.json' \)); do brotli $f -Z -j -f -v && mv ${f}.br $f; done
+  displayName: 'enable compression at origin level'
+  
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: 'src/ClientApp/public'
+    artifactName: 'drop'
+    
+- stage: Deploy
+  jobs:
+    - deployment: WebsiteDeploy
+      displayName: Deploy Fabrikam Drone Status app
+      pool:
+        vmImage: 'Ubuntu-16.04'
+      environment: 'fabrikamdronestatus-prod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
